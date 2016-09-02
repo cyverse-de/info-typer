@@ -54,7 +54,7 @@
                             :or {durable     false
                                  auto-delete false}}]
   (when-not (exchange? channel exchange)
-    (le/declare channel exchange type :durable durable :auto-delete auto-delete))
+    (le/declare channel exchange type {:durable durable :auto-delete auto-delete}))
   channel)
 
 

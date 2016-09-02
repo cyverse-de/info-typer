@@ -19,141 +19,141 @@
   (ref nil))
 
 
-(cc/defprop-str environment-name
+(cc/defprop-optstr environment-name
   "The short name of the environment info-typer is running in. Used for defining the name of the queue it listens on."
   [props config-valid configs]
-  "info-typer.environment-name")
+  "info-typer.environment-name" "docker-compose")
 
 
-(cc/defprop-str garnish-type-attribute
+(cc/defprop-optstr garnish-type-attribute
   "The value that goes in the attribute column for AVUs that define a file type."
   [props config-valid configs]
-  "info-typer.type-attribute")
+  "info-typer.type-attribute" "ipc-filetype")
 
 
-(cc/defprop-long filetype-read-amount
+(cc/defprop-optlong filetype-read-amount
   "The size, in bytes as a long, of the sample read from iRODS"
   [props config-valid configs]
-  "info-typer.filetype-read-amount")
+  "info-typer.filetype-read-amount" 1024)
 
 
-(cc/defprop-str irods-host
+(cc/defprop-optstr irods-host
   "Returns the iRODS hostname/IP address."
   [props config-valid configs]
-  "info-typer.irods.host")
+  "info-typer.irods.host" "irods")
 
 
-(cc/defprop-str irods-port
+(cc/defprop-optstr irods-port
   "Returns the iRODS port."
   [props config-valid configs]
-  "info-typer.irods.port")
+  "info-typer.irods.port" "1247")
 
 
-(cc/defprop-str irods-user
+(cc/defprop-optstr irods-user
   "Returns the user that porklock should connect as."
   [props config-valid configs]
-  "info-typer.irods.user")
+  "info-typer.irods.user" "rods")
 
 
-(cc/defprop-str irods-pass
+(cc/defprop-optstr irods-pass
   "Returns the iRODS user's password."
   [props config-valid configs]
-  "info-typer.irods.pass")
+  "info-typer.irods.pass" "notprod")
 
 
-(cc/defprop-str irods-zone
+(cc/defprop-optstr irods-zone
   "Returns the iRODS zone."
   [props config-valid configs]
-  "info-typer.irods.zone")
+  "info-typer.irods.zone" "iplant")
 
 
-(cc/defprop-str irods-home
+(cc/defprop-optstr irods-home
   "Returns the path to the home directory in iRODS. Usually /iplant/home"
   [props config-valid configs]
-  "info-typer.irods.home")
+  "info-typer.irods.home" "/iplant/home")
 
 
 (cc/defprop-optstr irods-resc
   "Returns the iRODS resource."
   [props config-valid configs]
-  "info-typer.irods.resc")
+  "info-typer.irods.resc" "")
 
 
-(cc/defprop-int irods-max-retries
+(cc/defprop-optint irods-max-retries
   "The number of retries for failed operations."
   [props config-valid configs]
-  "info-typer.irods.max-retries")
+  "info-typer.irods.max-retries" 10)
 
 
-(cc/defprop-int irods-retry-sleep
+(cc/defprop-optint irods-retry-sleep
   "The number of milliseconds to sleep between retries."
   [props config-valid configs]
-  "info-typer.irods.retry-sleep")
+  "info-typer.irods.retry-sleep" 1000)
 
 
-(cc/defprop-boolean irods-use-trash
+(cc/defprop-optboolean irods-use-trash
   "Toggles whether to move deleted files to the trash first."
   [props config-valid configs]
-  "info-typer.irods.use-trash")
+  "info-typer.irods.use-trash" true)
 
 
-(cc/defprop-str amqp-host
+(cc/defprop-optstr amqp-host
   "The hostname for the AMQP broker"
   [props config-valid configs]
-  "info-typer.amqp.host")
+  "info-typer.amqp.host" "rabbit")
 
 
-(cc/defprop-int amqp-port
+(cc/defprop-optint amqp-port
   "The port for the AMQP broker"
   [props config-valid configs]
-  "info-typer.amqp.port")
+  "info-typer.amqp.port" 5672)
 
 
-(cc/defprop-str amqp-user
+(cc/defprop-optstr amqp-user
   "The username for AMQP broker"
   [props config-valid configs]
-  "info-typer.amqp.user")
+  "info-typer.amqp.user" "guest")
 
 
-(cc/defprop-str amqp-pass
+(cc/defprop-optstr amqp-pass
   "The password for AMQP broker"
   [props config-valid configs]
-  "info-typer.amqp.pass")
+  "info-typer.amqp.pass" "guest")
 
 
-(cc/defprop-int amqp-retry-sleep
+(cc/defprop-optint amqp-retry-sleep
   "The number of milliseconds to sleep between connection retries."
   [props config-valid configs]
-  "info-typer.amqp.retry-sleep")
+  "info-typer.amqp.retry-sleep" 10000)
 
 
-(cc/defprop-str amqp-exchange
+(cc/defprop-optstr amqp-exchange
   "The exchange to listen to for iRODS updates."
   [props config-valid configs]
-  "info-typer.amqp.exchange")
+  "info-typer.amqp.exchange" "irods")
 
 
-(cc/defprop-str amqp-exchange-type
+(cc/defprop-optstr amqp-exchange-type
   "The exchange type for the iRODS updates"
   [props config-valid configs]
-  "info-typer.amqp.exchange.type")
+  "info-typer.amqp.exchange.type" "topic")
 
 
-(cc/defprop-boolean amqp-exchange-durable?
+(cc/defprop-optboolean amqp-exchange-durable?
   "Toggles whether or not the rabbitmq exchange is durable."
   [props config-valid configs]
-  "info-typer.amqp.exchange.durable")
+  "info-typer.amqp.exchange.durable" true)
 
 
-(cc/defprop-boolean amqp-exchange-auto-delete?
+(cc/defprop-optboolean amqp-exchange-auto-delete?
   "Toggles whether to auto-delete the exchange or not."
   [props config-valid configs]
-  "info-typer.amqp.exchange.auto-delete")
+  "info-typer.amqp.exchange.auto-delete" false)
 
-(cc/defprop-int amqp-qos
+(cc/defprop-optint amqp-qos
   "The number of messages to allow to be delivered to this client at once without acknowledgement."
   [props config-valid configs]
-  "info-typer.amqp.qos")
+  "info-typer.amqp.qos" 100)
 
 (defn- exception-filters
   []

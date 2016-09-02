@@ -24,9 +24,12 @@
                  [org.iplantc/common-cli "5.2.8.0"]
                  [org.iplantc/heuristomancer "5.2.8.0"]
                  [org.iplantc/service-logging "5.2.8.0"]]
+  :eastwood {:exclude-namespaces [:test-paths]
+             :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
   :main ^:skip-aot info-typer.core
   :profiles {:dev     {:resource-paths ["conf/test"]}
              :uberjar {:aot :all}}
-  :plugins [[test2junit "1.1.3"]]
+  :plugins [[jonase/eastwood "0.2.3"]
+            [test2junit "1.1.3"]]
   :uberjar-exclusions [#"LICENSE" #"NOTICE"]
   :jvm-opts ["-Dlogback.configurationFile=/etc/iplant/de/logging/info-typer-logging.xml"])
