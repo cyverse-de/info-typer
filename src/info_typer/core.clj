@@ -11,7 +11,7 @@
 (def ^:private svc-info
   {:desc     "DE message handling service for file info type detection"
    :app-name "info-typer"
-   :group-id "org.iplantc"
+   :group-id "org.cyverse"
    :art-id   "info-typer"
    :service  "info-typer"})
 
