@@ -11,9 +11,9 @@
 
 
 (defn- attempt-connect
-  [conn-map]
+  []
   (try
-    (let [conn (rmq/connect conn-map)]
+    (let [conn (rmq/connect {:uri (cfg/amqp-uri)})]
       (log/info "Connected to the AMQP broker.")
       conn)
     (catch SocketException e
@@ -22,12 +22,12 @@
 
 (defn- get-connection
   "Sets the amqp-conn ref if necessary and returns it."
-  [conn-map]
-  (if-let [conn (attempt-connect conn-map)]
+  []
+  (if-let [conn (attempt-connect)]
     conn
     (do
       (Thread/sleep (cfg/amqp-retry-sleep))
-      (recur conn-map))))
+      (recur))))
 
 
 (defn- exchange?
