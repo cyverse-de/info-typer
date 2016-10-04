@@ -103,10 +103,22 @@
   "info-typer.amqp.host" "rabbit")
 
 
+(cc/defprop-optstr amqp-events-host
+  "The hostname for the events AMQP broker"
+  [props config-valid configs]
+  "info-typer.events-amqp.host" "rabbit")
+
+
 (cc/defprop-optint amqp-port
   "The port for the AMQP broker"
   [props config-valid configs]
   "info-typer.amqp.port" 5672)
+
+
+(cc/defprop-optint amqp-events-port
+  "The port for the events AMQP broker"
+  [props config-valid configs]
+  "info-typer.events-amqp.port" 5672)
 
 
 (cc/defprop-optstr amqp-user
@@ -115,10 +127,22 @@
   "info-typer.amqp.user" "guest")
 
 
+(cc/defprop-optstr amqp-events-user
+  "The username for events AMQP broker"
+  [props config-valid configs]
+  "info-typer.events-amqp.user" "guest")
+
+
 (cc/defprop-optstr amqp-pass
   "The password for AMQP broker"
   [props config-valid configs]
   "info-typer.amqp.pass" "guest")
+
+
+(cc/defprop-optstr amqp-events-pass
+  "The password for AMQP broker"
+  [props config-valid configs]
+  "info-typer.events-amqp.pass" "guest")
 
 
 (cc/defprop-optint amqp-retry-sleep
@@ -133,10 +157,22 @@
   "info-typer.amqp.exchange" "irods")
 
 
+(cc/defprop-optstr amqp-events-exchange
+  "The exchange for sending and receiving event messages."
+  [props config-valid configs]
+  "info-typer.amqp.events-exchange" "de")
+
+
 (cc/defprop-optstr amqp-exchange-type
   "The exchange type for the iRODS updates"
   [props config-valid configs]
   "info-typer.amqp.exchange.type" "topic")
+
+
+(cc/defprop-optstr amqp-events-exchange-type
+  "The exchange type for events messages"
+  [props config-valid configs]
+  "info-typer.amqp.events-exchange.type" "topic")
 
 
 (cc/defprop-optboolean amqp-exchange-durable?
@@ -145,10 +181,23 @@
   "info-typer.amqp.exchange.durable" true)
 
 
+(cc/defprop-optboolean amqp-events-exchange-durable?
+  "Toggles whether or not the events exchange is durable."
+  [props config-valid configs]
+  "info-typer.amqp.events-exchange.durable" true)
+
+
 (cc/defprop-optboolean amqp-exchange-auto-delete?
   "Toggles whether to auto-delete the exchange or not."
   [props config-valid configs]
   "info-typer.amqp.exchange.auto-delete" false)
+
+
+(cc/defprop-optboolean amqp-events-exchange-auto-delete?
+  "Toggles whether to auto-delete the events exchange or not."
+  [props config-valid configs]
+  "info-typer.amqp.events-exchange.auto-delete" false)
+
 
 (cc/defprop-optint amqp-qos
   "The number of messages to allow to be delivered to this client at once without acknowledgement."

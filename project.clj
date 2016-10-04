@@ -23,7 +23,8 @@
                  [org.cyverse/clojure-commons "2.8.0" :exclusions [commons-logging]]
                  [org.cyverse/common-cli "2.8.0"]
                  [org.cyverse/heuristomancer "2.8.0"]
-                 [org.cyverse/service-logging "2.8.0"]]
+                 [org.cyverse/service-logging "2.8.0"]
+                 [org.cyverse/event-messages "0.0.1"]]
   :eastwood {:exclude-namespaces [:test-paths]
              :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
   :main ^:skip-aot info-typer.core
