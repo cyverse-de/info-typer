@@ -49,19 +49,6 @@
   channel)
 
 
-(defn declare-queue
-  "Declares a queue by name, returning its name."
-  [channel queue-name]
-  (:queue (lq/declare channel queue-name {:durable true :auto-delete false :exclusive false})))
-
-
-(defn bind
-  "Binds a queue to an exchange."
-  [channel queue exchange routing-key]
-  (lq/bind channel queue exchange {:routing-key routing-key})
-  channel)
-
-
 (defn subscribe
   "Registers a callback function that fires every time a message enters the specified queue."
   [channel queue msg-fn & {:keys [auto-ack]
