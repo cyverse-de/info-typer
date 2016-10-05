@@ -106,16 +106,3 @@
        {:routing-key topic}))
 
     (subscribe chan (:queue-name cfg-map) msg-fn :auto-ack false)))
-
-; (defn configure
-;   "Sets up a channel, exchange, and queue, with the queue bound to the exchange and 'msg-fn'
-;    registered as the callback."
-;   [msg-fn topics]
-;   (log/info "configuring AMQP connection")
-;   (let [chan (lch/open (get-connection (connection-map)))
-;         q    (declare-queue chan (str "info-typer." (cfg/environment-name)))]
-;     (lb/qos chan (cfg/amqp-qos))
-;     (declare-exchange chan (cfg/amqp-exchange) (cfg/amqp-exchange-type)
-;       :durable (cfg/amqp-exchange-durable?) :auto-delete (cfg/amqp-exchange-auto-delete?))
-;     (doseq [topic topics] (bind chan q (cfg/amqp-exchange) topic))
-;     (subscribe chan q msg-fn :auto-ack false)))
