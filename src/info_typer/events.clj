@@ -57,51 +57,16 @@
    :exchange-durable?     (cfg/amqp-events-exchange-durable?)
    :exchange-auto-delete? (cfg/amqp-events-exchange-auto-delete?)
    :queue-name            ""
-   :queue-exclusive?      true
+   :queue-durable?        false
+   :queue-exclusive?      false
    :queue-auto-delete?    true
    :qos                   (cfg/amqp-qos)})
-
-(defn channel
-  [cfg-map]
-  (let [ch (lch/open (amqp/get-connection (select-keys cfg-map [:uri])))]
-    (lb/qos ch (:qos cfg-map))
-    ch))
-
-(defn queue
-  [chan cfg-map]
-  (lq/declare chan
-              (:queue-name cfg-map)
-              {:exclusive   (:queue-exclusive? cfg-map)
-               :auto-delete (:queue-auto-delete? cfg-map)}))
-
-(defn configure
-  "Sets up a channel, exchange, and queue, with the queue bound to the exchange
-   and 'msg-fn' registered as the callback."
-  [msg-fn cfg-map topics]
-  (log/info "configuring events AMQP connection")
-  (let [chan (channel cfg-map)
-        q    (queue chan cfg-map)]
-    (amqp/declare-exchange
-     chan
-     (:exchange cfg-map)
-     (:exchange-type cfg-map)
-     :durable (:exchange-durable? cfg-map)
-     :auto-delete (:exchange-auto-delete? cfg-map))
-
-    (doseq [topic topics]
-      (lq/bind
-       chan
-       (:queue-name cfg-map)
-       (:exchange cfg-map)
-       {:routing-key topic}))
-
-    (amqp/subscribe chan (:queue-name cfg-map) msg-fn :auto-ack false)))
 
 (defn receive
   "Configures the AMQP connection. This is wrapped in a function because we want
    to start the connection in a new thread."
   []
   (try
-    (configure message-router (events-config-map) (keys routing-functions))
+    (amqp/configure message-router (events-config-map) (keys routing-functions))
     (catch Exception e
       (log/error "[amqp/messaging-initialization]" (ce/format-exception e)))))

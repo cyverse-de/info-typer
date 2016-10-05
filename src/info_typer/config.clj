@@ -115,6 +115,12 @@
   "info-typer.events.amqp.exchange.type" "topic")
 
 
+(cc/defprop-optboolean amqp-events-exchange-durable?
+  "Toggles whether or not the events exchange is durable."
+  [props config-valid configs]
+  "info-typer.events-amqp.exchange.durable" true)
+
+
 (cc/defprop-optboolean amqp-events-exchange-auto-delete?
   "Toggles whether to auto-delete the events exchange or not."
   [props config-valid configs]
@@ -127,28 +133,10 @@
   "info-typer.amqp.exchange.type" "topic")
 
 
-(cc/defprop-optstr amqp-host
-  "The hostname for the AMQP broker"
+(cc/defprop-optstr amqp-uri
+  "The URI for the info-typing AMQP broker"
   [props config-valid configs]
-  "info-typer.amqp.host" "rabbit")
-
-
-(cc/defprop-optint amqp-port
-  "The port for the AMQP broker"
-  [props config-valid configs]
-  "info-typer.amqp.port" 5672)
-
-
-(cc/defprop-optstr amqp-user
-  "The username for AMQP broker"
-  [props config-valid configs]
-  "info-typer.amqp.user" "guest")
-
-
-(cc/defprop-optstr amqp-pass
-  "The password for AMQP broker"
-  [props config-valid configs]
-  "info-typer.amqp.pass" "guest")
+  "info-typer.amqp.uri" "amqp://guest:guest@rabbit:5672/")
 
 
 (cc/defprop-optint amqp-retry-sleep
@@ -161,12 +149,6 @@
   "The exchange to listen to for iRODS updates."
   [props config-valid configs]
   "info-typer.amqp.exchange" "irods")
-
-
-(cc/defprop-optboolean amqp-events-exchange-durable?
-  "Toggles whether or not the events exchange is durable."
-  [props config-valid configs]
-  "info-typer.events-amqp.exchange.durable" true)
 
 
 (cc/defprop-optboolean amqp-exchange-durable?

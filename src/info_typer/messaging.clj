@@ -75,12 +75,39 @@
     (when-let [handler (get routing-functions routing-key)]
       (handler irods-cfg channel metadata payload))))
 
+(defn typer-config-map
+  "Constructs a amqp configuration map that can be passed to
+   the configure function. Returns a map in the format:
+   {
+     :uri                   string
+     :exchange              string
+     :exchange-type         string
+     :exchange-durable?     bool
+     :exchange-auto-delete? bool
+     :queue-name            string
+     :queue-durable?        bool
+     :queue-exclusive?      bool
+     :queue-auto-delete?    bool
+     :qos                   integer
+   }"
+  []
+  {:uri                   (cfg/amqp-uri)
+   :exchange              (cfg/amqp-exchange)
+   :exchange-type         (cfg/amqp-exchange-type)
+   :exchange-durable?     (cfg/amqp-exchange-durable?)
+   :exchange-auto-delete? (cfg/amqp-exchange-auto-delete?)
+   :queue-name            (str "info-typer." (cfg/environment-name))
+   :queue-durable?        true
+   :queue-exclusive?      false
+   :queue-auto-delete?    false
+   :qos                   (cfg/amqp-qos)})
+
 
 (defn receive
   "Configures the AMQP connection. This is wrapped in a function because we want to start
    the connection in a new thread."
   [^IPersistentMap irods-cfg]
   (try
-    (amqp/configure (partial message-handler irods-cfg) (keys routing-functions))
+    (amqp/configure (partial message-handler irods-cfg) (typer-config-map) (keys routing-functions))
     (catch Exception e
       (log/error "[amqp/messaging-initialization]" (ce/format-exception e)))))

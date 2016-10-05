@@ -10,15 +10,6 @@
   (:import [java.net SocketException]))
 
 
-(defn- connection-map
-  "Returns a configuration map for the RabbitMQ connection."
-  []
-  {:host     (cfg/amqp-host)
-   :port     (cfg/amqp-port)
-   :username (cfg/amqp-user)
-   :password (cfg/amqp-pass)})
-
-
 (defn- attempt-connect
   [conn-map]
   (try
@@ -79,15 +70,52 @@
   channel)
 
 
+(defn channel
+  [cfg-map]
+  (let [ch (lch/open (get-connection (select-keys cfg-map [:uri])))]
+    (lb/qos ch (:qos cfg-map))
+    ch))
+
+(defn queue
+  [chan cfg-map]
+  (lq/declare chan
+              (:queue-name cfg-map)
+              {:exclusive   (:queue-exclusive? cfg-map)
+               :durable     (:queue-durable? cfg-map)
+               :auto-delete (:queue-auto-delete? cfg-map)}))
+
 (defn configure
-  "Sets up a channel, exchange, and queue, with the queue bound to the exchange and 'msg-fn'
-   registered as the callback."
-  [msg-fn topics]
-  (log/info "configuring AMQP connection")
-  (let [chan (lch/open (get-connection (connection-map)))
-        q    (declare-queue chan (str "info-typer." (cfg/environment-name)))]
-    (lb/qos chan (cfg/amqp-qos))
-    (declare-exchange chan (cfg/amqp-exchange) (cfg/amqp-exchange-type)
-      :durable (cfg/amqp-exchange-durable?) :auto-delete (cfg/amqp-exchange-auto-delete?))
-    (doseq [topic topics] (bind chan q (cfg/amqp-exchange) topic))
-    (subscribe chan q msg-fn :auto-ack false)))
+  "Sets up a channel, exchange, and queue, with the queue bound to the exchange
+   and 'msg-fn' registered as the callback."
+  [msg-fn cfg-map topics]
+  (log/info "configuring events AMQP connection")
+  (let [chan (channel cfg-map)
+        q    (queue chan cfg-map)]
+    (declare-exchange
+     chan
+     (:exchange cfg-map)
+     (:exchange-type cfg-map)
+     :durable (:exchange-durable? cfg-map)
+     :auto-delete (:exchange-auto-delete? cfg-map))
+
+    (doseq [topic topics]
+      (lq/bind
+       chan
+       (:queue-name cfg-map)
+       (:exchange cfg-map)
+       {:routing-key topic}))
+
+    (subscribe chan (:queue-name cfg-map) msg-fn :auto-ack false)))
+
+; (defn configure
+;   "Sets up a channel, exchange, and queue, with the queue bound to the exchange and 'msg-fn'
+;    registered as the callback."
+;   [msg-fn topics]
+;   (log/info "configuring AMQP connection")
+;   (let [chan (lch/open (get-connection (connection-map)))
+;         q    (declare-queue chan (str "info-typer." (cfg/environment-name)))]
+;     (lb/qos chan (cfg/amqp-qos))
+;     (declare-exchange chan (cfg/amqp-exchange) (cfg/amqp-exchange-type)
+;       :durable (cfg/amqp-exchange-durable?) :auto-delete (cfg/amqp-exchange-auto-delete?))
+;     (doseq [topic topics] (bind chan q (cfg/amqp-exchange) topic))
+;     (subscribe chan q msg-fn :auto-ack false)))
