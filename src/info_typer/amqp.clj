@@ -20,7 +20,7 @@
       (log/warn "Failed to connect to the AMQP broker."))))
 
 
-(defn get-connection
+(defn- get-connection
   "Sets the amqp-conn ref if necessary and returns it."
   [conn-map]
   (if-let [conn (attempt-connect conn-map)]
@@ -39,7 +39,7 @@
     (catch java.io.IOException _ false)))
 
 
-(defn declare-exchange
+(defn- declare-exchange
   "Declares an exchange if it doesn't already exist."
   [channel exchange type & {:keys [durable auto-delete]
                             :or {durable     false
@@ -49,7 +49,7 @@
   channel)
 
 
-(defn subscribe
+(defn- subscribe
   "Registers a callback function that fires every time a message enters the specified queue."
   [channel queue msg-fn & {:keys [auto-ack]
                            :or   {auto-ack true}}]
@@ -57,13 +57,13 @@
   channel)
 
 
-(defn channel
+(defn- channel
   [cfg-map]
   (let [ch (lch/open (get-connection (select-keys cfg-map [:uri])))]
     (lb/qos ch (:qos cfg-map))
     ch))
 
-(defn queue
+(defn- queue
   [chan cfg-map]
   (lq/declare chan
               (:queue-name cfg-map)
