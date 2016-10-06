@@ -33,6 +33,8 @@
   (tc/with-logging-context {:amqp-delivery-tag delivery-tag}
     (log/info (format "[events/message-router] [%s] [%s]" routing-key (String. payload "UTF-8")))
 
+    (lb/ack channel delivery-tag)
+
     (when-let [handler (get routing-functions routing-key)]
       (handler channel metadata payload))))
 
