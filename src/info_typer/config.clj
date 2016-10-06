@@ -100,7 +100,7 @@
 (cc/defprop-optstr amqp-events-uri
   "The hostname for the events AMQP broker"
   [props config-valid configs]
-  "info-typer.events.amqp.uri" "")
+  "info-typer.events.amqp.uri" "amqp://guest:guest@rabbit:5672/%2F")
 
 
 (cc/defprop-optstr amqp-events-exchange
