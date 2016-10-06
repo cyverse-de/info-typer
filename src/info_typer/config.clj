@@ -97,28 +97,46 @@
   "info-typer.irods.use-trash" true)
 
 
-(cc/defprop-optstr amqp-host
-  "The hostname for the AMQP broker"
+(cc/defprop-optstr amqp-events-uri
+  "The hostname for the events AMQP broker"
   [props config-valid configs]
-  "info-typer.amqp.host" "rabbit")
+  "info-typer.events.amqp.uri" "amqp://guest:guest@rabbit:5672/")
 
 
-(cc/defprop-optint amqp-port
-  "The port for the AMQP broker"
+(cc/defprop-optstr amqp-events-exchange
+  "The exchange for sending and receiving event messages."
   [props config-valid configs]
-  "info-typer.amqp.port" 5672)
+  "info-typer.events.amqp.exchange" "de")
 
 
-(cc/defprop-optstr amqp-user
-  "The username for AMQP broker"
+(cc/defprop-optstr amqp-events-exchange-type
+  "The exchange type for events messages"
   [props config-valid configs]
-  "info-typer.amqp.user" "guest")
+  "info-typer.events.amqp.exchange.type" "topic")
 
 
-(cc/defprop-optstr amqp-pass
-  "The password for AMQP broker"
+(cc/defprop-optboolean amqp-events-exchange-durable?
+  "Toggles whether or not the events exchange is durable."
   [props config-valid configs]
-  "info-typer.amqp.pass" "guest")
+  "info-typer.events-amqp.exchange.durable" true)
+
+
+(cc/defprop-optboolean amqp-events-exchange-auto-delete?
+  "Toggles whether to auto-delete the events exchange or not."
+  [props config-valid configs]
+  "info-typer.events-amqp.exchange.auto-delete" false)
+
+
+(cc/defprop-optstr amqp-exchange-type
+  "The exchange type for the iRODS updates"
+  [props config-valid configs]
+  "info-typer.amqp.exchange.type" "topic")
+
+
+(cc/defprop-optstr amqp-uri
+  "The URI for the info-typing AMQP broker"
+  [props config-valid configs]
+  "info-typer.amqp.uri" "amqp://guest:guest@rabbit:5672/")
 
 
 (cc/defprop-optint amqp-retry-sleep
@@ -133,12 +151,6 @@
   "info-typer.amqp.exchange" "irods")
 
 
-(cc/defprop-optstr amqp-exchange-type
-  "The exchange type for the iRODS updates"
-  [props config-valid configs]
-  "info-typer.amqp.exchange.type" "topic")
-
-
 (cc/defprop-optboolean amqp-exchange-durable?
   "Toggles whether or not the rabbitmq exchange is durable."
   [props config-valid configs]
@@ -149,6 +161,7 @@
   "Toggles whether to auto-delete the exchange or not."
   [props config-valid configs]
   "info-typer.amqp.exchange.auto-delete" false)
+
 
 (cc/defprop-optint amqp-qos
   "The number of messages to allow to be delivered to this client at once without acknowledgement."

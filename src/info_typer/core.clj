@@ -5,6 +5,7 @@
             [common-cli.core :as ccli]
             [info-typer.config :as cfg]
             [info-typer.messaging :as messages]
+            [info-typer.events :as events]
             [service-logging.thread-context :as tc]))
 
 
@@ -47,4 +48,5 @@
       (when-not (fs/readable? (:config options))
         (ccli/exit 1 "The config file is not readable."))
       (cfg/load-config-from-file (:config options))
-      (messages/receive (mk-jargon-cfg)))))
+      (messages/receive (mk-jargon-cfg))
+      (events/receive))))
