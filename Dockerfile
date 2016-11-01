@@ -1,11 +1,10 @@
-FROM clojure:alpine
+FROM discoenv/clojure-base:master
 
-RUN apk add --update git && \
-    rm -rf /var/cache/apk
+ENV CONF_TEMPLATE=/usr/src/app/info-typer.properties.tmpl
+ENV CONF_FILENAME=info-typer.properties
+ENV PROGRAM=info-typer
 
 VOLUME ["/etc/iplant/de"]
-
-WORKDIR /usr/src/app
 
 COPY project.clj /usr/src/app/
 RUN lein deps
@@ -18,8 +17,7 @@ RUN lein uberjar && \
 
 RUN ln -s "/usr/bin/java" "/bin/info-typer"
 
-ENTRYPOINT ["info-typer", "-Dlogback.configurationFile=/etc/iplant/de/logging/info-typer-logging.xml", "-cp", ".:info-typer-standalone.jar", "info_typer.core"]
-CMD ["--help"]
+ENTRYPOINT ["run-service", "-Dlogback.configurationFile=/etc/iplant/de/logging/info-typer-logging.xml", "-cp", ".:info-typer-standalone.jar", "info_typer.core"]
 
 ARG git_commit=unknown
 ARG version=unknown
