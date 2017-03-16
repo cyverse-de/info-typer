@@ -21,7 +21,7 @@
                    :exclusions [[org.slf4j/slf4j-log4j12]
                                 [log4j]]]
                  [org.cyverse/clojure-commons "2.8.0" :exclusions [commons-logging]]
-                 [org.cyverse/common-cli "2.8.0"]
+                 [org.cyverse/common-cli "2.8.1"]
                  [org.cyverse/heuristomancer "2.8.2"]
                  [org.cyverse/service-logging "2.8.0"]
                  [org.cyverse/event-messages "0.0.1"]]
