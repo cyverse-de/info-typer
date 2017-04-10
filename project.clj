@@ -7,7 +7,7 @@
       (string/trim (:out (sh "git" "rev-parse" "HEAD")))
       ""))
 
-(defproject org.cyverse/info-typer "2.8.1-SNAPSHOT"
+(defproject org.cyverse/info-typer "2.12.0-SNAPSHOT"
   :description "An AMQP based info type detection service for iRODS"
   :url "https://github.com/cyverse-de/info-typer"
   :license {:name "BSD"
@@ -17,7 +17,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [com.novemberain/langohr "3.6.1"]
                  [me.raynes/fs "1.4.6"]
-                 [org.cyverse/clj-jargon "2.8.0"
+                 [org.cyverse/clj-jargon "2.8.2"
                    :exclusions [[org.slf4j/slf4j-log4j12]
                                 [log4j]]]
                  [org.cyverse/clojure-commons "2.8.0" :exclusions [commons-logging]]
