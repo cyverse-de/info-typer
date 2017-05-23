@@ -58,7 +58,7 @@
    :exchange-type         (cfg/amqp-events-exchange-type)
    :exchange-durable?     (cfg/amqp-events-exchange-durable?)
    :exchange-auto-delete? (cfg/amqp-events-exchange-auto-delete?)
-   :queue-name            ""
+   :queue-name            "events.info-typer.queue"
    :queue-durable?        false
    :queue-exclusive?      false
    :queue-auto-delete?    true
