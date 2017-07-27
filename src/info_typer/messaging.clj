@@ -37,7 +37,8 @@
           (do (if (meta/attribute? cm path (cfg/garnish-type-attribute))
                 (log/warn "file" id "already has an attribute called" (cfg/garnish-type-attribute))
                 (let [ctype (irods/content-type cm path)]
-                  (when-not (or (nil? ctype) (string/blank? ctype))
+                  ; Double-check an attribute hasn't been added during the time it took for us to detect.
+                  (when-not (or (nil? ctype) (string/blank? ctype) (meta/attribute? cm path (cfg/garnish-type-attribute)))
                     (log/info "adding type" ctype "to file" id)
                     (meta/add-metadata cm path (cfg/garnish-type-attribute) ctype "")
                     (log/debug "done adding type" ctype "to file" id))
