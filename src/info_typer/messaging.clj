@@ -36,14 +36,14 @@
             (log/error "file" id "does not exist"))
           (do (if (meta/attribute? cm path (cfg/garnish-type-attribute))
                 (log/warn "file" id "already has an attribute called" (cfg/garnish-type-attribute))
-                (let [ctype (irods/content-type cm path)]
+                (let [detected-type (irods/content-type cm path)
+                      ctype (if (or (nil? detected-type) (string/blank? detected-type))
+                              (do (log/warn "type was not detected for file" id ", adding type unknown") "unknown") detected-type)]
                   ; Double-check an attribute hasn't been added during the time it took for us to detect.
-                  (when-not (or (nil? ctype) (string/blank? ctype) (meta/attribute? cm path (cfg/garnish-type-attribute)))
+                  (when-not (meta/attribute? cm path (cfg/garnish-type-attribute))
                     (log/info "adding type" ctype "to file" id)
-                    (meta/add-metadata cm path (cfg/garnish-type-attribute) ctype "")
-                    (log/debug "done adding type" ctype "to file" id))
-                  (when (or (nil? ctype) (string/blank? ctype))
-                    (log/warn "type was not detected for file" id))))
+                    (meta/add-metadata cm path (cfg/garnish-type-attribute) ctype "ipc-info-typer")
+                    (log/debug "done adding type" ctype "to file" id))))
               (lb/ack channel delivery-tag)))))
     (catch ce/error? err
       (lb/reject channel delivery-tag (not redelivery?))
