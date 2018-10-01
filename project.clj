@@ -17,7 +17,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [com.novemberain/langohr "3.6.1"]
                  [me.raynes/fs "1.4.6"]
-                 [org.cyverse/clj-jargon "2.8.3"
+                 [org.cyverse/clj-jargon "2.8.9"
                    :exclusions [[org.slf4j/slf4j-log4j12]
                                 [log4j]]]
                  [org.cyverse/clojure-commons "2.8.0" :exclusions [commons-logging]]
