@@ -38,7 +38,7 @@
                 (log/warn "file" id "already has an attribute called" (cfg/garnish-type-attribute))
                 (let [detected-type (irods/content-type cm path)
                       ctype (if (or (nil? detected-type) (string/blank? detected-type))
-                              (do (log/warn "type was not detected for file" id ", adding type unknown") "unknown") detected-type)]
+                              (do (log/debug "type was not detected for file" id ", adding type unknown") "unknown") detected-type)]
                   ; Double-check an attribute hasn't been added during the time it took for us to detect.
                   (when-not (meta/attribute? cm path (cfg/garnish-type-attribute))
                     (log/info "adding type" ctype "to file" id)
