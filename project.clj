@@ -17,13 +17,14 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [com.novemberain/langohr "3.6.1"]
                  [me.raynes/fs "1.4.6"]
-                 [org.cyverse/clj-jargon "2.8.9"
+                 [org.cyverse/clj-jargon "3.0.0"
                    :exclusions [[org.slf4j/slf4j-log4j12]
                                 [log4j]]]
                  [org.cyverse/clojure-commons "2.8.0" :exclusions [commons-logging]]
                  [org.cyverse/common-cli "2.8.1"]
                  [org.cyverse/heuristomancer "2.8.6"]
-                 [org.cyverse/service-logging "2.8.0"]
+                 [org.cyverse/service-logging "2.8.2"]
+                 [net.logstash.logback/logstash-logback-encoder "4.11"]
                  [org.cyverse/event-messages "0.0.1"]]
   :eastwood {:exclude-namespaces [:test-paths]
              :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
