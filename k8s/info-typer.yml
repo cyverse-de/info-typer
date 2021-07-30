@@ -31,7 +31,7 @@ spec:
                 path: info-typer.properties
       containers:
       - name: info-typer
-        image: discoenv/info-typer
+        image: harbor.cyverse.org/de/info-typer
         volumeMounts:
           - name: localtime
             mountPath: /etc/localtime

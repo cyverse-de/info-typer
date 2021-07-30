@@ -10,5 +10,5 @@ build:
   tagPolicy:
     gitCommit: {}
   artifacts:
-  - image: discoenv/info-typer
+  - image: harbor.cyverse.org/de/info-typer
   local: {}
