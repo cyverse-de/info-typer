@@ -34,4 +34,4 @@
   :plugins [[jonase/eastwood "0.2.3"]
             [test2junit "1.1.3"]]
   :uberjar-exclusions [#"LICENSE" #"NOTICE"]
-  :jvm-opts ["-Dlogback.configurationFile=/etc/iplant/de/logging/info-typer-logging.xml"])
+  :jvm-opts ["-Dlogback.configurationFile=/etc/iplant/de/logging/info-typer-logging.xml" "-javaagent:./opentelemetry-javaagent.jar" "-Dotel.resource.attributes=service.name=info-typer"])

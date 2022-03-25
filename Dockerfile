@@ -1,10 +1,12 @@
-FROM clojure:lein-alpine
+FROM clojure:openjdk-17-lein-alpine
 
 WORKDIR /usr/src/app
 
 RUN apk add --no-cache git
 
-RUN ln -s "/usr/bin/java" "/bin/info-typer"
+RUN ln -s "/opt/openjdk-17/bin/java" "/bin/info-typer"
+
+ENV OTEL_TRACES_EXPORTER none
 
 COPY project.clj /usr/src/app/
 RUN lein deps
@@ -15,7 +17,7 @@ COPY . /usr/src/app
 RUN lein uberjar && \
     cp target/info-typer-standalone.jar .
 
-ENTRYPOINT ["info-typer", "-Dlogback.configurationFile=/etc/iplant/de/logging/info-typer-logging.xml", "-cp", ".:info-typer-standalone.jar", "info_typer.core"]
+ENTRYPOINT ["info-typer", "-Dlogback.configurationFile=/etc/iplant/de/logging/info-typer-logging.xml", "-javaagent:/usr/src/app/opentelemetry-javaagent.jar", "-Dotel.resource.attributes=service.name=info-typer", "-cp", ".:info-typer-standalone.jar", "info_typer.core"]
 CMD ["--help"]
 
 ARG git_commit=unknown
