@@ -11,7 +11,8 @@
             [langohr.basic :as lb]
             [info-typer.amqp :as amqp]
             [info-typer.config :as cfg]
-            [info-typer.irods :as irods])
+            [info-typer.irods :as irods]
+            [otel.otel :as otel])
   (:import [clojure.lang IPersistentMap]
            [java.util UUID]))
 
@@ -26,31 +27,32 @@
 (defn- filetype-message-handler
   "Handle a message. Retry once in the case of missing files or exceptions."
   [irods-cfg channel {:keys [delivery-tag redelivery?] :as metadata} payload]
-  (try+
-    (with-jargon irods-cfg [cm]
-      (let [id   (get-file-id payload)
-            path (uuid/get-path cm id)]
-        (if (nil? path)
-          (do
-            (lb/reject channel delivery-tag (not redelivery?))
-            (log/error "file" id "does not exist"))
-          (do (if (meta/attribute? cm path (cfg/garnish-type-attribute))
-                (log/warn "file" id "already has an attribute called" (cfg/garnish-type-attribute))
-                (let [detected-type (irods/content-type cm path)
-                      ctype (if (or (nil? detected-type) (string/blank? detected-type))
-                              (do (log/debug "type was not detected for file" id ", adding type unknown") "unknown") detected-type)]
-                  ; Double-check an attribute hasn't been added during the time it took for us to detect.
-                  (when-not (meta/attribute? cm path (cfg/garnish-type-attribute))
-                    (log/info "adding type" ctype "to file" id)
-                    (meta/add-metadata cm path (cfg/garnish-type-attribute) ctype "ipc-info-typer")
-                    (log/debug "done adding type" ctype "to file" id))))
-              (lb/ack channel delivery-tag)))))
-    (catch ce/error? err
-      (lb/reject channel delivery-tag (not redelivery?))
-      (log/error (ce/format-exception (:throwable &throw-context))))
-    (catch Exception e
-      (lb/reject channel delivery-tag (not redelivery?))
-      (log/error (ce/format-exception e)))))
+  (otel/with-span [s ["filetype-message-handler"]]
+    (try+
+      (with-jargon irods-cfg [cm]
+        (let [id   (get-file-id payload)
+              path (uuid/get-path cm id)]
+          (if (nil? path)
+            (do
+              (lb/reject channel delivery-tag (not redelivery?))
+              (log/error "file" id "does not exist"))
+            (do (if (meta/attribute? cm path (cfg/garnish-type-attribute))
+                  (log/warn "file" id "already has an attribute called" (cfg/garnish-type-attribute))
+                  (let [detected-type (irods/content-type cm path)
+                        ctype (if (or (nil? detected-type) (string/blank? detected-type))
+                                (do (log/debug "type was not detected for file" id ", adding type unknown") "unknown") detected-type)]
+                    ; Double-check an attribute hasn't been added during the time it took for us to detect.
+                    (when-not (meta/attribute? cm path (cfg/garnish-type-attribute))
+                      (log/info "adding type" ctype "to file" id)
+                      (meta/add-metadata cm path (cfg/garnish-type-attribute) ctype "ipc-info-typer")
+                      (log/debug "done adding type" ctype "to file" id))))
+                (lb/ack channel delivery-tag)))))
+      (catch ce/error? err
+        (lb/reject channel delivery-tag (not redelivery?))
+        (log/error (ce/format-exception (:throwable &throw-context))))
+      (catch Exception e
+        (lb/reject channel delivery-tag (not redelivery?))
+        (log/error (ce/format-exception e))))))
 
 
 (defn- dataobject-added

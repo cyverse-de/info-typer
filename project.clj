@@ -24,6 +24,7 @@
                  [org.cyverse/common-cli "2.8.1"]
                  [org.cyverse/heuristomancer "2.8.6"]
                  [org.cyverse/service-logging "2.8.2"]
+                 [org.cyverse/otel "0.2.5"]
                  [net.logstash.logback/logstash-logback-encoder "4.11"]
                  [org.cyverse/event-messages "0.0.1"]]
   :eastwood {:exclude-namespaces [:test-paths]
