@@ -6,6 +6,7 @@ pom.xml.asc
 *.jar
 !opentelemetry-javaagent.jar
 *.class
+/.eastwood
 /.lein-*
 /.nrepl-port
 build.xml
