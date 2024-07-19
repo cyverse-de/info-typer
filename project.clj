@@ -14,7 +14,7 @@
             :url "http://iplantcollaborative.org/sites/default/files/iPLANT-LICENSE.txt"}
   :manifest {"Git-Ref" ~(git-ref)}
   :uberjar-name "info-typer-standalone.jar"
-  :dependencies [[org.clojure/clojure "1.11.1"]
+  :dependencies [[org.clojure/clojure "1.11.3"]
                  [com.novemberain/langohr "3.6.1"]
                  [me.raynes/fs "1.4.6"]
                  [org.cyverse/clj-jargon "3.1.0"
@@ -23,9 +23,8 @@
                  [org.cyverse/clojure-commons "3.0.7" :exclusions [commons-logging]]
                  [org.cyverse/common-cli "2.8.1"]
                  [org.cyverse/heuristomancer "2.8.6"]
-                 [org.cyverse/service-logging "2.8.3"]
-                 [org.cyverse/otel "0.2.5"]
-                 [net.logstash.logback/logstash-logback-encoder "7.4"]
+                 [org.cyverse/service-logging "2.8.4-SNAPSHOT"]
+                 [org.cyverse/otel "0.2.6"]
                  [org.cyverse/event-messages "0.0.1"]]
   :eastwood {:exclude-namespaces [:test-paths]
              :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
