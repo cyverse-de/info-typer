@@ -24,7 +24,7 @@
                  [org.cyverse/common-cli "2.8.1"]
                  [org.cyverse/heuristomancer "2.8.6"]
                  [org.cyverse/service-logging "2.8.4-SNAPSHOT"]
-                 [org.cyverse/otel "0.2.6-SNAPSHOT"]
+                 [org.cyverse/otel "0.2.6"]
                  [org.cyverse/event-messages "0.0.1"]]
   :eastwood {:exclude-namespaces [:test-paths]
              :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
