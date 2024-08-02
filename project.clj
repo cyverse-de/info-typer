@@ -15,7 +15,7 @@
   :manifest {"Git-Ref" ~(git-ref)}
   :uberjar-name "info-typer-standalone.jar"
   :dependencies [[org.clojure/clojure "1.11.3"]
-                 [com.novemberain/langohr "3.6.1"]
+                 [com.novemberain/langohr "5.4.0" :exclusions [org.slf4j/slf4j-api]]
                  [me.raynes/fs "1.4.6"]
                  [org.cyverse/clj-jargon "3.1.1"
                    :exclusions [[org.slf4j/slf4j-log4j12]
