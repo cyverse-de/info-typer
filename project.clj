@@ -23,18 +23,14 @@
                  [org.cyverse/clojure-commons "3.0.9" :exclusions [commons-logging]]
                  [org.cyverse/common-cli "2.8.2"]
                  [org.cyverse/heuristomancer "2.8.7"]
-                 [org.cyverse/service-logging "2.8.4"]
-                 [org.cyverse/otel "0.2.6"]]
+                 [org.cyverse/service-logging "2.8.4"]]
   :eastwood {:exclude-namespaces [:test-paths]
              :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
   :main ^:skip-aot info-typer.core
-  :profiles {:dev     {:resource-paths ["conf/test"]
-                       :jvm-opts ["-Dotel.javaagent.enabled=false"]}
+  :profiles {:dev     {:resource-paths ["conf/test"]}
              :uberjar {:aot :all}}
   :plugins [[jonase/eastwood "1.4.3"]
             [lein-ancient "0.7.0"]
             [test2junit "1.4.4"]]
   :uberjar-exclusions [#"LICENSE" #"NOTICE"]
-  :jvm-opts ["-Dlogback.configurationFile=/etc/iplant/de/logging/info-typer-logging.xml"
-             "-javaagent:./opentelemetry-javaagent.jar"
-             "-Dotel.resource.attributes=service.name=info-typer"])
+  :jvm-opts ["-Dlogback.configurationFile=/etc/iplant/de/logging/info-typer-logging.xml"])
