@@ -17,7 +17,7 @@ COPY . /usr/src/app
 RUN lein do clean, uberjar && \
     cp target/info-typer-standalone.jar .
 
-ENTRYPOINT ["info-typer", "-Dlogback.configurationFile=/etc/iplant/de/logging/info-typer-logging.xml", "-cp", ".:info-typer-standalone.jar", "info_typer.core"]
+ENTRYPOINT ["info-typer", "-Dlogback.configurationFile=/usr/src/app/logback.xml", "-cp", ".:info-typer-standalone.jar", "info_typer.core"]
 CMD ["--help"]
 
 ARG git_commit=unknown
