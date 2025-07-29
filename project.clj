@@ -14,13 +14,13 @@
             :url "http://iplantcollaborative.org/sites/default/files/iPLANT-LICENSE.txt"}
   :manifest {"Git-Ref" ~(git-ref)}
   :uberjar-name "info-typer-standalone.jar"
-  :dependencies [[org.clojure/clojure "1.11.3"]
-                 [com.novemberain/langohr "5.4.0" :exclusions [org.slf4j/slf4j-api]]
+  :dependencies [[org.clojure/clojure "1.12.1"]
+                 [com.novemberain/langohr "5.5.0" :exclusions [org.slf4j/slf4j-api]]
                  [me.raynes/fs "1.4.6"]
                  [org.cyverse/clj-jargon "3.1.1"
                    :exclusions [[org.slf4j/slf4j-log4j12]
                                 [log4j]]]
-                 [org.cyverse/clojure-commons "3.0.9" :exclusions [commons-logging]]
+                 [org.cyverse/clojure-commons "3.0.11" :exclusions [commons-logging]]
                  [org.cyverse/common-cli "2.8.2"]
                  [org.cyverse/heuristomancer "2.8.7"]
                  [org.cyverse/service-logging "2.8.4"]]
