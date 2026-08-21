@@ -15,9 +15,12 @@
   (try
     (let [conn (rmq/connect conn-map)]
       (log/info "Connected to the AMQP broker.")
+      (cfg/set-amqp-connected! true)
       conn)
     (catch SocketException e
-      (log/warn "Failed to connect to the AMQP broker."))))
+      (cfg/set-amqp-connected! false)
+      (log/warn "Failed to connect to the AMQP broker; retrying. Until it succeeds, uploaded"
+                "files will not be typed automatically, though the HTTP API still answers."))))
 
 
 (defn- get-connection
