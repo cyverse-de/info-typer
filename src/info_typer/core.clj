@@ -1,21 +1,15 @@
 (ns info-typer.core
   (:gen-class)
   (:require [me.raynes.fs :as fs]
+            [clojure.tools.logging :as log]
             [common-cli.core :as ccli]
             [info-typer.config :as cfg]
             [info-typer.messaging :as messages]
             [info-typer.routes :as routes]
+            [info-typer.service :as svc]
             [info-typer.util.irods :as irods]
             [ring.adapter.jetty :as jetty]
             [service-logging.thread-context :as tc]))
-
-
-(def ^:private svc-info
-  {:desc     "DE message handling service for file info type detection"
-   :app-name "info-typer"
-   :group-id "org.cyverse"
-   :art-id   "info-typer"
-   :service  "info-typer"})
 
 
 (defn- cli-options
@@ -26,21 +20,43 @@
    ["-h" "--help"]])
 
 
-(defn- start-consumer
-  "Starts the AMQP consumer on its own thread.
+(def ^:private consumer-retry-ms
+  "How long to wait before starting the AMQP consumer again after it stops."
+  30000)
 
-   It used to own the main thread, and the process only stayed alive because langohr's
-   consumer thread is not a daemon. Jetty owns the main thread now, so this is started first
-   and explicitly: a broker that is unreachable must not stop the HTTP API from coming up,
-   because the file type endpoints answer without it."
+(defn- consume-forever
+  "Runs the AMQP consumer, restarting it if it ever stops.
+
+   The supervision is the point. amqp/attempt-connect only retries SocketException, so an
+   unresolvable broker host, a rejected credential or a bad vhost all escape it -- and before
+   this service had an HTTP API, that killed the last non-daemon thread and the process
+   exited, which Kubernetes noticed and retried. Jetty holds the process open now, so without
+   this the pod would stay up and healthy while silently typing nothing."
   []
-  (.start (Thread. ^Runnable #(messages/receive (irods/jargon-cfg)) "info-typer-amqp")))
+  (loop []
+    (try
+      (messages/receive (irods/jargon-cfg))
+      (catch Throwable t
+        (log/error t "the AMQP consumer stopped; uploaded files will not be typed until it"
+                   "reconnects. This usually means the broker is unreachable or the"
+                   "credentials in info-typer.amqp.uri are wrong.")))
+    (cfg/set-amqp-connected! false)
+    (Thread/sleep consumer-retry-ms)
+    (recur)))
+
+(defn- start-consumer
+  "Starts the AMQP consumer on its own supervised thread.
+
+   Started before jetty and separately from it: a broker that is unreachable must not stop the
+   HTTP API coming up, because the file type endpoints answer without it."
+  []
+  (.start (Thread. ^Runnable consume-forever "info-typer-amqp")))
 
 
 (defn -main
   [& args]
-  (tc/with-logging-context svc-info
-    (let [{:keys [options]} (ccli/handle-args svc-info args cli-options)]
+  (tc/with-logging-context svc/svc-info
+    (let [{:keys [options]} (ccli/handle-args svc/svc-info args cli-options)]
       (when-not (fs/exists? (:config options))
         (ccli/exit 1 "The config file does not exist."))
       (when-not (fs/readable? (:config options))

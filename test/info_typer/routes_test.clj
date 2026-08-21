@@ -75,12 +75,30 @@
   (is (true? (:amqp (body-of (routes/app (mock/request :get "/")))))))
 
 (deftest the-configuration-is-masked
-  (let [body (body-of (routes/app (mock/request :get "/admin/config")))
-        rendered (json/generate-string body)]
-    (is (= 200 (:status (routes/app (mock/request :get "/admin/config")))))
-    ;; The test config's iRODS password. Its presence here would mean the mask does not cover
-    ;; what data-info's left exposed.
-    (is (not (re-find #"notprod" rendered)))))
+  ;; Loaded from a config that actually sets these, not from the empty one the other tests
+  ;; use. mask-config only reports properties that are present, so asserting against an empty
+  ;; config passes whether the mask works or not.
+  (config/load-config-from-file "conf/test/secrets.properties")
+  (try
+    (let [response (routes/app (mock/request :get "/admin/config"))
+          body     (body-of response)
+          rendered (json/generate-string body)]
+      (is (= 200 (:status response)))
+
+      ;; Both properties are in the response at all -- without this the rest is vacuous.
+      (is (contains? body (keyword "info-typer.irods.pass")))
+      (is (contains? body (keyword "info-typer.amqp.uri")))
+
+      ;; The iRODS password, which mask-config catches by property name.
+      (is (not (re-find #"notprod" rendered)))
+
+      ;; The broker password, which it catches only because the URI is named explicitly:
+      ;; mask-config matches names, and nothing about info-typer.amqp.uri says its value
+      ;; carries a credential. That is exactly how data-info publishes its own.
+      (is (not (re-find #"SUPERSECRETBROKERPW" rendered))
+          "the AMQP URI's password is in the response"))
+    (finally
+      (config/load-config-from-file "conf/test/empty.properties"))))
 
 (deftest an-unrecognised-path-keeps-the-shape-clients-know
   (let [response (routes/app (mock/request :get "/nothing-here"))
@@ -103,6 +121,14 @@
   (testing "the empty string is accepted on input, because it is how a type is unset"
     (is (contains? (set filetype-schema/ValidInfoTypes) "unknown"))
     (is (nil? (s/check filetype-schema/ValidInfoTypesEnumPlusBlank "")))))
+
+(deftest a-malformed-data-id-is-refused-before-irods-is-dialled
+  ;; The path parameter is coerced, so an id that is not a UUID fails schema validation. Left
+  ;; as a plain string it reached UUID/fromString inside the iRODS connection, which cost a
+  ;; connection and answered 500 where data-info answers 400.
+  (let [response (routes/app (-> (mock/request :put "/data/not-a-uuid/type?user=someone")
+                                 (mock/json-body {:type "csv"})))]
+    (is (= 400 (:status response)))))
 
 (deftest detecting-nothing-is-unknown
   ;; Guards the handler's contract directly, not only through the route: a nil body reaching

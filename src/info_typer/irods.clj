@@ -19,9 +19,13 @@
       (if (>= filled limit)
         buffer
         (let [read (.read stream buffer filled (- limit filled))]
-          (cond
-            (neg? read)   (when (pos? filled) (Arrays/copyOf buffer filled))
-            :else         (recur (+ filled read))))))))
+          ;; A zero-length read is disallowed by InputStream's contract when a positive length
+          ;; was asked for, and jetty's blocking input honours it -- but treating it as
+          ;; end-of-stream rather than looping means a stream that breaks the contract costs a
+          ;; short sample instead of a pinned CPU.
+          (if (pos? read)
+            (recur (+ filled read))
+            (when (pos? filled) (Arrays/copyOf buffer filled))))))))
 
 
 (defn identify-stream

@@ -1,14 +1,14 @@
 (ns info-typer.filetypes
   (:require [clj-jargon.by-uuid :as by-uuid]
             [clj-jargon.metadata :as meta]
+            [clojure-commons.file-utils :as ft]
             [clojure.string :as string]
             [heuristomancer.core :as hm]
             [info-typer.config :as cfg]
             [info-typer.irods :as irods]
             [info-typer.util.irods :as util-irods]
             [info-typer.validators :as validators])
-  (:import [java.io InputStream]
-           [java.util UUID]))
+  (:import [java.io InputStream]))
 
 ;; The AVU unit every typed file in the data store carries. It is not the same as the unit the
 ;; AMQP consumer writes ("ipc-info-typer"), and that difference is deliberate: it records
@@ -42,7 +42,10 @@
 (defn- validated-path
   "Resolves a data id to a path the given user may set the type on."
   [cm user data-id]
-  (let [path (by-uuid/get-path cm (UUID/fromString data-id))]
+  ;; rm-last-slash as the reference does. A collection's path comes from jargon's
+  ;; getCollectionName, and unsetting a type on a folder is supported here, so the AVU has to
+  ;; land on the same path string data-info would have written.
+  (let [path (ft/rm-last-slash (by-uuid/get-path cm data-id))]
     (validators/uuid-exists path data-id)
     (validators/path-exists cm path)
     (validators/user-exists cm user)

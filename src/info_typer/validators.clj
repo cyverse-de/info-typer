@@ -1,9 +1,9 @@
 (ns info-typer.validators
-  (:use [slingshot.slingshot :only [throw+]])
   (:require [clj-jargon.item-info :as item]
             [clj-jargon.permissions :as perm]
             [clj-jargon.users :as user]
-            [clojure-commons.error-codes :as error]))
+            [clojure-commons.error-codes :as error]
+            [slingshot.slingshot :refer [throw+]]))
 
 ;; These reproduce data-info.util.validators for the endpoints moving here. The error codes
 ;; and the keys beside them are what terrain and the DE's UI read, so they are copied rather

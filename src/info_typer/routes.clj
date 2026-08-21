@@ -1,10 +1,10 @@
 (ns info-typer.routes
   (:use [common-swagger-api.schema]
+        [common-swagger-api.schema.data :only [DataIdPathParam]]
         [common-swagger-api.schema.filetypes]
         [compojure.api.middleware :only [wrap-exceptions]]
         [service-logging.middleware :only [log-validation-errors add-user-to-context]])
-  (:require [clojure-commons.error-codes :as ce]
-            [clojure-commons.exception :as cx]
+  (:require [clojure-commons.exception :as cx]
             [clojure-commons.lcase-params :refer [wrap-lcase-params]]
             [clojure-commons.query-params :refer [wrap-query-params]]
             [compojure.route :as route]
@@ -13,13 +13,6 @@
             [info-typer.service :as svc]
             [ring.middleware.keyword-params :as params]
             [schema.core :as s]))
-
-(def ^:private svc-info
-  {:desc     "DE service for file info type detection"
-   :app-name "info-typer"
-   :group-id "org.cyverse"
-   :art-id   "info-typer"
-   :service  "info-typer"})
 
 (s/defschema DetectedType
   {:type (describe String "The detected file type, or \"unknown\"")})
@@ -49,7 +42,7 @@
                     currently connected. The AMQP connection is reported but does not decide
                     the response: the file type endpoints work without it, and failing here
                     would take them out of service too."
-      (svc/success-response (assoc svc-info :amqp (config/amqp-connected?))))
+      (svc/success-response (assoc svc/svc-info :amqp (config/amqp-connected?))))
 
     (GET "/admin/config" []
       :tags ["service-info"]
@@ -57,12 +50,12 @@
       :description "Lists the service's configuration, with anything secret masked."
       (svc/success-response (config/masked-config)))
 
-    (GET "/file-types" []
+    (GET "/file-types" [:as {uri :uri}]
       :tags ["filetypes"]
       :return TypesList
       :summary "List File Types"
       :description "Lists available file types supported by the underlying library heuristomancer."
-      (svc/trap "/file-types" filetypes/type-list))
+      (svc/trap uri filetypes/type-list))
 
     (POST "/file-types/detect" []
       :tags ["filetypes"]
@@ -75,7 +68,7 @@
         (svc/success-response {:type (filetypes/detect-type (:body request))})))
 
     (context "/data/:data-id" []
-      :path-params [data-id :- (describe String "The data item's UUID")]
+      :path-params [data-id :- DataIdPathParam]
       :tags ["data-by-id"]
 
       (PUT "/type" [:as {uri :uri}]
@@ -93,9 +86,10 @@
         :query [params StandardUserQueryParams]
         :return FileTypeReturn
         :summary "Detect and Set File Type"
-        :description "Identifies a file's type from its contents and records it, which is what
-                      the AMQP consumer does when a file is uploaded. This is the same
-                      operation on demand.
+        :description "Re-detects a file's type from its contents and records it, overwriting
+                      whatever type it already had. This is not quite what the AMQP consumer
+                      does on upload: that one leaves a file alone if it is already typed, and
+                      records a different unit to say so.
 
                       Error codes: ERR_NOT_OWNER, ERR_DOES_NOT_EXIST, ERR_NOT_A_USER,
                       ERR_NOT_A_FILE"

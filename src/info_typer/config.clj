@@ -147,12 +147,12 @@
 (defn masked-config
   "The service's configuration with anything secret filtered out.
 
-   The mask is broad on purpose. data-info's only covers irods and icat credentials, which
-   left its AMQP URI -- and the broker password inside it -- in the clear; this service
-   publishes nothing and consumes from that same broker, so there is no reason to repeat
-   that."
+   mask-config matches on the property name, not the value, so the AMQP URI needs naming
+   explicitly: its password lives inside the value and nothing about the name says so. That
+   is how data-info's mask leaves its broker password in the clear, and it is the reason this
+   one is tested against the URI rather than only against irods.pass."
   []
-  (cc/mask-config props :filters [#"(?i)pass|secret|token|password"]))
+  (cc/mask-config props :filters [#"(?i)pass|secret|token|password" #"amqp\.uri"]))
 
 
 (def ^:private amqp-connected
