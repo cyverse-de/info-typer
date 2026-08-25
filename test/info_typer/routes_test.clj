@@ -27,17 +27,24 @@
       (instance? java.io.InputStream body) (json/parse-string (slurp body) true)
       :else                           body)))
 
-;; The raw-body case is first because it is the one most likely to break without anyone
-;; noticing: compojure-api installs format middleware that will happily consume an
-;; octet-stream body before the handler sees it, leaving the detector reading an empty stream
-;; and reporting "unknown" for everything.
+;; This one is first because it is the case most likely to break without anyone noticing:
+;; compojure-api's parameter and format middleware sit outside every route and both consume
+;; :body before a handler runs. A form-encoded body -- what curl sends by default -- was
+;; slurped for parameters, leaving the detector an exhausted stream and answering "unknown"
+;; for everything, and a body labelled application/json that is not JSON was rejected with a
+;; 400 before the handler ran. The content type is ignored here so that neither can happen.
 (deftest detect-reads-the-raw-request-body
-  (testing "a CSV sample is identified from the bytes in the body"
-    (let [response (routes/app (-> (mock/request :post "/file-types/detect")
-                                   (mock/content-type "application/octet-stream")
-                                   (mock/body "a,b,c\n1,2,3\n4,5,6\n")))]
-      (is (= 200 (:status response)))
-      (is (= "csv" (:type (body-of response))))))
+  (doseq [content-type ["application/octet-stream"
+                        "application/x-www-form-urlencoded"
+                        "application/json"
+                        "application/x-yaml"
+                        "text/plain"]]
+    (testing (str "a CSV sample is identified from bytes labelled " content-type)
+      (let [response (routes/app (-> (mock/request :post "/file-types/detect")
+                                     (mock/content-type content-type)
+                                     (mock/body "a,b,c\n1,2,3\n4,5,6\n")))]
+        (is (= 200 (:status response)))
+        (is (= "csv" (:type (body-of response)))))))
 
   (testing "bytes nothing recognises are reported as unknown rather than as a failure"
     (let [response (routes/app (-> (mock/request :post "/file-types/detect")
@@ -52,6 +59,16 @@
                                    (mock/body "")))]
       (is (= 200 (:status response)))
       (is (= "unknown" (:type (body-of response)))))))
+
+(deftest the-detect-operation-documents-its-raw-body
+  ;; Without both of these a client generated from the spec sends no body at all and labels
+  ;; the request as JSON, inheriting the API-wide consumes list -- which is precisely the
+  ;; request that used to come back wrong.
+  (let [op (-> (routes/app (mock/request :get "/swagger.json"))
+               body-of
+               (get-in [:paths (keyword "/file-types/detect") :post]))]
+    (is (= ["application/octet-stream"] (:consumes op)))
+    (is (= ["body"] (map :in (:parameters op))))))
 
 (deftest file-types-are-listed
   (let [response (routes/app (mock/request :get "/file-types"))

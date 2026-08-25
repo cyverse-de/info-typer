@@ -9,6 +9,7 @@
             [service-logging.thread-context :as tc]
             [clojure-commons.error-codes :as ce]
             [langohr.basic :as lb]
+            [langohr.core :as rmq]
             [info-typer.amqp :as amqp]
             [info-typer.config :as cfg]
             [info-typer.irods :as irods])
@@ -112,14 +113,20 @@
    second later."
   [^IPersistentMap irods-cfg]
   (try
-    (let [chan (amqp/configure (partial message-handler irods-cfg)
-                               (typer-config-map)
-                               (keys routing-functions))]
-      ;; Held open until the channel closes. langohr delivers on its own threads, so there is
-      ;; nothing to do here but wait for the connection to end and let the supervisor know.
-      (while (.isOpen chan)
-        (Thread/sleep 1000))
-      (log/warn "the AMQP channel closed; the consumer is no longer receiving events"))
+    (let [{:keys [connection channel]} (amqp/configure (partial message-handler irods-cfg)
+                                                       (typer-config-map)
+                                                       (keys routing-functions))]
+      (try
+        ;; Held open until the channel closes. langohr delivers on its own threads, so there is
+        ;; nothing to do here but wait for the connection to end and let the supervisor know.
+        (while (rmq/open? channel)
+          (Thread/sleep 1000))
+        (log/warn "the AMQP channel closed; the consumer is no longer receiving events")
+        (finally
+          ;; The supervisor reconnects from scratch, so the connection goes with the channel.
+          ;; Left open, every reconnection would strand a connection and add a second consumer
+          ;; on the same queue.
+          (amqp/close-connection connection))))
     (catch Exception e
       (log/error "[amqp/messaging-initialization]" (ce/format-exception e)))
     (finally

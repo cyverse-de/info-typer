@@ -60,11 +60,26 @@
   channel)
 
 
-(defn- channel
+(defn- connection-settings
+  "Broker settings, with langohr's automatic recovery turned off.
+
+   Recovery is this service's job, not langohr's. While langohr reconnects, the channel it
+   handed out reports itself closed, which the supervisor reads as a dead consumer -- it then
+   opens a second connection alongside the one langohr is quietly restoring, and both stay
+   subscribed to the same queue."
   [cfg-map]
-  (let [ch (lch/open (get-connection (select-keys cfg-map [:uri])))]
+  (assoc (select-keys cfg-map [:uri])
+         :automatically-recover          false
+         :automatically-recover-topology false))
+
+
+(defn- channel
+  "Opens a connection and a channel on it, returning both."
+  [cfg-map]
+  (let [conn (get-connection (connection-settings cfg-map))
+        ch   (lch/open conn)]
     (lb/qos ch (:qos cfg-map))
-    ch))
+    [conn ch]))
 
 (defn- queue
   [chan cfg-map]
@@ -74,25 +89,47 @@
                :durable     (:queue-durable? cfg-map)
                :auto-delete (:queue-auto-delete? cfg-map)}))
 
+(defn close-connection
+  "Closes a broker connection, logging rather than throwing if it has already gone away."
+  [conn]
+  (try
+    (rmq/close conn)
+    (catch Exception e
+      (log/warn e "failed to close the AMQP connection; it had probably already been torn down"
+                "by the broker or by the network"))))
+
+
 (defn configure
   "Sets up a channel, exchange, and queue, with the queue bound to the exchange
-   and 'msg-fn' registered as the callback."
+   and 'msg-fn' registered as the callback.
+
+   Returns the connection and the channel. The caller owns both and has to close the
+   connection when it is done with them."
   [msg-fn cfg-map topics]
   (log/info "configuring events AMQP connection")
-  (let [chan (channel cfg-map)
-        q    (queue chan cfg-map)]
-    (declare-exchange
-     chan
-     (:exchange cfg-map)
-     (:exchange-type cfg-map)
-     :durable (:exchange-durable? cfg-map)
-     :auto-delete (:exchange-auto-delete? cfg-map))
-
-    (doseq [topic topics]
-      (lq/bind
+  (let [[conn chan] (channel cfg-map)]
+    (try
+      (queue chan cfg-map)
+      (declare-exchange
        chan
-       (:queue-name cfg-map)
        (:exchange cfg-map)
-       {:routing-key topic}))
+       (:exchange-type cfg-map)
+       :durable (:exchange-durable? cfg-map)
+       :auto-delete (:exchange-auto-delete? cfg-map))
 
-    (subscribe chan (:queue-name cfg-map) msg-fn :auto-ack false)))
+      (doseq [topic topics]
+        (lq/bind
+         chan
+         (:queue-name cfg-map)
+         (:exchange cfg-map)
+         {:routing-key topic}))
+
+      (subscribe chan (:queue-name cfg-map) msg-fn :auto-ack false)
+      {:connection conn :channel chan}
+      (catch Throwable t
+        ;; Setup can fail with the connection already open -- a passive declare for an
+        ;; exchange that does not exist takes the channel down, and the broker leaves the
+        ;; connection running. The caller has nothing to close in that case, so it closes here
+        ;; or not at all, and the supervisor's next attempt would strand another one.
+        (close-connection conn)
+        (throw t)))))

@@ -33,16 +33,21 @@
    exited, which Kubernetes noticed and retried. Jetty holds the process open now, so without
    this the pod would stay up and healthy while silently typing nothing."
   []
-  (loop []
-    (try
-      (messages/receive (irods/jargon-cfg))
-      (catch Throwable t
-        (log/error t "the AMQP consumer stopped; uploaded files will not be typed until it"
-                   "reconnects. This usually means the broker is unreachable or the"
-                   "credentials in info-typer.amqp.uri are wrong.")))
-    (cfg/set-amqp-connected! false)
-    (Thread/sleep consumer-retry-ms)
-    (recur)))
+  ;; The logging context is established again here rather than inherited from -main: logback
+  ;; keeps the MDC in a plain ThreadLocal, so a thread started from -main gets none of it and
+  ;; the consumer's log lines -- the ones an operator greps for when uploads stop being typed
+  ;; -- would arrive without the fields naming the service.
+  (tc/with-logging-context svc/svc-info
+    (loop []
+      (try
+        (messages/receive (irods/jargon-cfg))
+        (catch Throwable t
+          (log/error t "the AMQP consumer stopped; uploaded files will not be typed until it"
+                     "reconnects. This usually means the broker is unreachable or the"
+                     "credentials in info-typer.amqp.uri are wrong.")))
+      (cfg/set-amqp-connected! false)
+      (Thread/sleep consumer-retry-ms)
+      (recur))))
 
 (defn- start-consumer
   "Starts the AMQP consumer on its own supervised thread.

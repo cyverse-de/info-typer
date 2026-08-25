@@ -17,7 +17,30 @@
 (s/defschema DetectedType
   {:type (describe String "The detected file type, or \"unknown\"")})
 
-(defapi app
+;; Repeated from the route below because the middleware that needs it runs outside the API
+;; handler, where compojure has not routed the request yet. detect-reads-the-raw-request-body
+;; fails if the two ever drift apart.
+(def ^:private detect-uri "/file-types/detect")
+
+(defn- wrap-unparsed-detect-body
+  "Takes the content type off a detect request so that nothing parses its body.
+
+   compojure-api wraps every route in parameter and format middleware, and both consume :body
+   before a handler runs: a form-encoded body is slurped for parameters, leaving the detector
+   an exhausted stream and every file \"unknown\", and a body labelled application/json that is
+   not JSON is rejected outright. Neither is right for an endpoint whose job is to look at the
+   bytes whatever the caller called them, and both middlewares sit outside the API handler, so
+   the label has to come off out here."
+  [handler]
+  (fn [request]
+    (if (and (= :post (:request-method request))
+             (= detect-uri (:uri request)))
+      (handler (-> request
+                   (update :headers dissoc "content-type")
+                   (dissoc :content-type)))
+      (handler request))))
+
+(defapi ^:private api-routes
   (swagger-routes
    {:ui   "/docs"
     :data {:info {:title       "Discovery Environment Info Typer API"
@@ -63,7 +86,15 @@
       :summary "Detect a File Type"
       :description "Identifies the type of the raw bytes in the request body. Nothing is read
                     from or written to the data store, and no user is involved -- this exists
-                    so that a caller holding the bytes can ask what they are."
+                    so that a caller holding the bytes can ask what they are.
+
+                    The body is never parsed, whatever content type it carries."
+      ;; Declared through :swagger rather than with :body, which would coerce the bytes
+      ;; against the schema. The declaration matters: without it a client generated from this
+      ;; spec sends no body at all, and inherits a JSON content type from the API-wide
+      ;; consumes list.
+      :swagger {:consumes   ["application/octet-stream"]
+                :parameters {:body (describe (s/maybe s/Str) "The bytes to identify.")}}
       (fn [request]
         (svc/success-response {:type (filetypes/detect-type (:body request))})))
 
@@ -96,3 +127,7 @@
         (svc/trap uri filetypes/detect-and-set-file-type (:user params) data-id)))
 
     (undocumented (route/not-found (svc/unrecognized-path-response)))))
+
+(def app
+  "The service's ring handler."
+  (wrap-unparsed-detect-body api-routes))
