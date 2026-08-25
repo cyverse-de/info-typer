@@ -44,7 +44,12 @@
 (defn- get-file-type
   "Uses heuristomancer to determine a the file type of a file."
   [cm path]
-  (with-open [stream (input-stream cm path)]
+  ;; Hinted java.io.InputStream on purpose. clj-jargon declares input-stream as returning
+  ;; IRODSFileInputStream but hands back a PackingIrodsInputStream, and the two are siblings
+  ;; rather than one extending the other -- so without the hint the local takes the declared
+  ;; type, the close that with-open compiles gets a checkcast the value can never satisfy, and
+  ;; every typing attempt dies with a ClassCastException.
+  (with-open [^InputStream stream (input-stream cm path)]
     (identify-stream stream)))
 
 
