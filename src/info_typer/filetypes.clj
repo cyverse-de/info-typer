@@ -23,11 +23,9 @@
   {:types script-types})
 
 (defn detect-type
-  "Identifies the type of a sample of a file's contents, or \"unknown\".
+  "Identifies the type of a sample of a file's contents.
 
-   A missing body is \"unknown\" rather than a failure. A caller asking what some bytes are
-   and supplying none has asked a question with an answer, and the AMQP path treats an
-   unidentifiable file the same way."
+   A missing or unrecognized body is \"unknown\" rather than a failure."
   [^InputStream stream]
   (let [result (irods/identify-stream stream)]
     (if (string/blank? result)
@@ -42,9 +40,7 @@
 (defn- validated-path
   "Resolves a data id to a path the given user may set the type on."
   [cm user data-id]
-  ;; rm-last-slash as the reference does. A collection's path comes from jargon's
-  ;; getCollectionName, and unsetting a type on a folder is supported here, so the AVU has to
-  ;; land on the same path string data-info would have written.
+  ;; Collection paths come back from jargon with a trailing slash that the AVU must not carry.
   (let [path (ft/rm-last-slash (by-uuid/get-path cm data-id))]
     (validators/uuid-exists path data-id)
     (validators/path-exists cm path)
@@ -59,8 +55,8 @@
    AVU -- the DE distinguishes a file nobody has typed from one typed as unidentifiable, and
    removing the attribute would collapse the two.
 
-   Unsetting deliberately skips the is-a-file check that setting performs. That asymmetry is
-   the reference's: a folder that somehow acquired a type can still have it cleared."
+   Unsetting skips the is-a-file check that setting performs, so that a folder that somehow
+   acquired a type can still have it cleared."
   [user data-id type]
   (util-irods/with-jargon-exceptions [cm]
     (let [path (validated-path cm user data-id)]

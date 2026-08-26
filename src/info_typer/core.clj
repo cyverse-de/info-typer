@@ -27,16 +27,12 @@
 (defn- consume-forever
   "Runs the AMQP consumer, restarting it if it ever stops.
 
-   The supervision is the point. amqp/attempt-connect only retries SocketException, so an
-   unresolvable broker host, a rejected credential or a bad vhost all escape it -- and before
-   this service had an HTTP API, that killed the last non-daemon thread and the process
-   exited, which Kubernetes noticed and retried. Jetty holds the process open now, so without
-   this the pod would stay up and healthy while silently typing nothing."
+   amqp/attempt-connect only retries SocketException, so an unresolvable broker host, a
+   rejected credential or a bad vhost all escape it. Without this loop the service would stay
+   up and healthy while silently typing nothing."
   []
-  ;; The logging context is established again here rather than inherited from -main: logback
-  ;; keeps the MDC in a plain ThreadLocal, so a thread started from -main gets none of it and
-  ;; the consumer's log lines -- the ones an operator greps for when uploads stop being typed
-  ;; -- would arrive without the fields naming the service.
+  ;; Established again rather than inherited: logback keeps the MDC in a ThreadLocal, so this
+  ;; thread gets none of the context set in -main.
   (tc/with-logging-context svc/svc-info
     (loop []
       (try

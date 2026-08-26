@@ -17,20 +17,15 @@
 (s/defschema DetectedType
   {:type (describe String "The detected file type, or \"unknown\"")})
 
-;; Repeated from the route below because the middleware that needs it runs outside the API
-;; handler, where compojure has not routed the request yet. detect-reads-the-raw-request-body
-;; fails if the two ever drift apart.
+;; Repeated from the route below because the middleware that needs it runs before compojure
+;; has routed the request. detect-reads-the-raw-request-body fails if the two drift apart.
 (def ^:private detect-uri "/file-types/detect")
 
 (defn- wrap-unparsed-detect-body
   "Takes the content type off a detect request so that nothing parses its body.
 
-   compojure-api wraps every route in parameter and format middleware, and both consume :body
-   before a handler runs: a form-encoded body is slurped for parameters, leaving the detector
-   an exhausted stream and every file \"unknown\", and a body labelled application/json that is
-   not JSON is rejected outright. Neither is right for an endpoint whose job is to look at the
-   bytes whatever the caller called them, and both middlewares sit outside the API handler, so
-   the label has to come off out here."
+   compojure-api's parameter and format middleware both consume :body before a handler runs,
+   and both sit outside the API handler, so the label has to come off out here."
   [handler]
   (fn [request]
     (if (and (= :post (:request-method request))

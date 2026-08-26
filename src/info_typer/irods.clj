@@ -8,21 +8,13 @@
 
 
 (defn- sample
-  "Reads up to limit bytes from a stream, or nil when there are none.
-
-   Looped rather than a single read: a stream may return fewer bytes than asked for without
-   being at its end, and a short first read would make a recognisable file look like something
-   else."
+  "Reads up to limit bytes from a stream, or nil when there are none."
   [^InputStream stream ^long limit]
   (let [buffer (byte-array limit)]
     (loop [filled 0]
       (if (>= filled limit)
         buffer
         (let [read (.read stream buffer filled (- limit filled))]
-          ;; A zero-length read is disallowed by InputStream's contract when a positive length
-          ;; was asked for, and jetty's blocking input honours it -- but treating it as
-          ;; end-of-stream rather than looping means a stream that breaks the contract costs a
-          ;; short sample instead of a pinned CPU.
           (if (pos? read)
             (recur (+ filled read))
             (when (pos? filled) (Arrays/copyOf buffer filled))))))))

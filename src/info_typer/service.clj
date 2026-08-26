@@ -3,10 +3,7 @@
             [clojure-commons.error-codes :as ce]))
 
 (def svc-info
-  "What this service calls itself.
-
-   One copy, because there were two and they had already drifted: the HTTP API described the
-   service differently from the one the logs and the CLI used."
+  "What this service calls itself."
   {:desc     "DE service for file info type detection"
    :app-name "info-typer"
    :group-id "org.cyverse"

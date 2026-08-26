@@ -108,24 +108,21 @@
 (defn receive
   "Configures the AMQP connection and blocks while the consumer runs.
 
-   It blocks on purpose: the caller supervises it, and a function that returned as soon as the
-   consumer was registered would look identical whether the consumer was alive or had died a
-   second later."
+   Blocks while waiting for the connection so that the caller can determine whether or not the
+   consumer has died."
   [^IPersistentMap irods-cfg]
   (try
     (let [{:keys [connection channel]} (amqp/configure (partial message-handler irods-cfg)
                                                        (typer-config-map)
                                                        (keys routing-functions))]
       (try
-        ;; Held open until the channel closes. langohr delivers on its own threads, so there is
-        ;; nothing to do here but wait for the connection to end and let the supervisor know.
+        ;; langohr delivers on its own threads, so there is nothing to do here but wait.
         (while (rmq/open? channel)
           (Thread/sleep 1000))
         (log/warn "the AMQP channel closed; the consumer is no longer receiving events")
         (finally
-          ;; The supervisor reconnects from scratch, so the connection goes with the channel.
-          ;; Left open, every reconnection would strand a connection and add a second consumer
-          ;; on the same queue.
+          ;; Closed with the channel: the supervisor reconnects from scratch, and a stranded
+          ;; connection would leave a second consumer on the same queue.
           (amqp/close-connection connection))))
     (catch Exception e
       (log/error "[amqp/messaging-initialization]" (ce/format-exception e)))
