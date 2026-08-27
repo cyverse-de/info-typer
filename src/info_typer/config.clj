@@ -19,6 +19,12 @@
   (ref nil))
 
 
+(cc/defprop-optint listen-port
+  "The port the HTTP API listens on."
+  [props config-valid configs]
+  "info-typer.port" 60000)
+
+
 (cc/defprop-optstr environment-name
   "The short name of the environment info-typer is running in. Used for defining the name of the queue it listens on."
   [props config-valid configs]
@@ -137,6 +143,36 @@
   "The number of messages to allow to be delivered to this client at once without acknowledgement."
   [props config-valid configs]
   "info-typer.amqp.qos" 100)
+
+(defn masked-config
+  "The service's configuration with anything secret filtered out.
+
+   mask-config matches on the property name, not the value, so the AMQP URI needs naming
+   explicitly: its password lives inside the value and nothing about the name says so. That
+   is how data-info's mask leaves its broker password in the clear, and it is the reason this
+   one is tested against the URI rather than only against irods.pass."
+  []
+  (cc/mask-config props :filters [#"(?i)pass|secret|token|password" #"amqp\.uri"]))
+
+
+(def ^:private amqp-connected
+  "Whether the AMQP consumer currently has a connection.
+
+   Surfaced by GET / so that an operator can see it, and deliberately not part of whether the
+   probe passes: the HTTP API answers file-type questions without the broker, and failing the
+   probe would take those down as well."
+  (atom false))
+
+
+(defn set-amqp-connected!
+  [connected?]
+  (reset! amqp-connected connected?))
+
+
+(defn amqp-connected?
+  []
+  @amqp-connected)
+
 
 (defn- exception-filters
   []

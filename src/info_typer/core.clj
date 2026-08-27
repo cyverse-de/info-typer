@@ -1,19 +1,15 @@
 (ns info-typer.core
   (:gen-class)
   (:require [me.raynes.fs :as fs]
-            [clj-jargon.init :as init]
+            [clojure.tools.logging :as log]
             [common-cli.core :as ccli]
             [info-typer.config :as cfg]
             [info-typer.messaging :as messages]
+            [info-typer.routes :as routes]
+            [info-typer.service :as svc]
+            [info-typer.util.irods :as irods]
+            [ring.adapter.jetty :as jetty]
             [service-logging.thread-context :as tc]))
-
-
-(def ^:private svc-info
-  {:desc     "DE message handling service for file info type detection"
-   :app-name "info-typer"
-   :group-id "org.cyverse"
-   :art-id   "info-typer"
-   :service  "info-typer"})
 
 
 (defn- cli-options
@@ -24,27 +20,49 @@
    ["-h" "--help"]])
 
 
-(defn- mk-jargon-cfg
+(def ^:private consumer-retry-ms
+  "How long to wait before starting the AMQP consumer again after it stops."
+  30000)
+
+(defn- consume-forever
+  "Runs the AMQP consumer, restarting it if it ever stops.
+
+   amqp/attempt-connect only retries SocketException, so an unresolvable broker host, a
+   rejected credential or a bad vhost all escape it. Without this loop the service would stay
+   up and healthy while silently typing nothing."
   []
-  (init/init (cfg/irods-host)
-    (cfg/irods-port)
-    (cfg/irods-user)
-    (cfg/irods-pass)
-    (cfg/irods-home)
-    (cfg/irods-zone)
-    (cfg/irods-resc)
-    :max-retries (cfg/irods-max-retries)
-    :retry-sleep (cfg/irods-retry-sleep)
-    :use-trash   (cfg/irods-use-trash)))
+  ;; Established again rather than inherited: logback keeps the MDC in a ThreadLocal, so this
+  ;; thread gets none of the context set in -main.
+  (tc/with-logging-context svc/svc-info
+    (loop []
+      (try
+        (messages/receive (irods/jargon-cfg))
+        (catch Throwable t
+          (log/error t "the AMQP consumer stopped; uploaded files will not be typed until it"
+                     "reconnects. This usually means the broker is unreachable or the"
+                     "credentials in info-typer.amqp.uri are wrong.")))
+      (cfg/set-amqp-connected! false)
+      (Thread/sleep consumer-retry-ms)
+      (recur))))
+
+(defn- start-consumer
+  "Starts the AMQP consumer on its own supervised thread.
+
+   Started before jetty and separately from it: a broker that is unreachable must not stop the
+   HTTP API coming up, because the file type endpoints answer without it."
+  []
+  (.start (Thread. ^Runnable consume-forever "info-typer-amqp")))
 
 
 (defn -main
   [& args]
-  (tc/with-logging-context svc-info
-    (let [{:keys [options arguments errors summary]} (ccli/handle-args svc-info args cli-options)]
+  (tc/with-logging-context svc/svc-info
+    (let [{:keys [options]} (ccli/handle-args svc/svc-info args cli-options)]
       (when-not (fs/exists? (:config options))
         (ccli/exit 1 "The config file does not exist."))
       (when-not (fs/readable? (:config options))
         (ccli/exit 1 "The config file is not readable."))
       (cfg/load-config-from-file (:config options))
-      (messages/receive (mk-jargon-cfg)))))
+
+      (start-consumer)
+      (jetty/run-jetty routes/app {:port (cfg/listen-port) :join? true}))))

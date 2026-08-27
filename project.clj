@@ -22,6 +22,12 @@
   ;; :managed-dependencies" hint -- that hint names the version that LOST the
   ;; conflict, so pasting it would be a silent upgrade.
   ;;
+  ;; The ring-* entries are the exception: ring-jetty-adapter 1.9.6 brings ring-servlet 1.9.6,
+  ;; so ring-core and ring-codec are pinned forward to match rather than left at the versions
+  ;; that won the conflict. A ring-core older than the servlet layer it is paired with works
+  ;; only for as long as the servlet layer touches nothing newer, and fails at runtime rather
+  ;; than at build time when it stops being true.
+  ;;
   ;; The jackson-* entries hold the family where clj-jargon puts it. jargon-core
   ;; is pinned :upgrade false at 4.3.7.0-RELEASE for iRODS compatibility and
   ;; brings jackson 2.14.1. jackson-core sits higher because cheshire needs it
@@ -39,23 +45,26 @@
                          [commons-codec "1.16.1"]
                          [org.apache.commons/commons-compress "1.8"]
                          [prismatic/schema "1.1.12"]
-                         [ring/ring-codec "1.1.0"]
-                         [ring/ring-core "1.6.3"]]
+                         [ring/ring-codec "1.2.0"]
+                         [ring/ring-core "1.9.6"]]
   :dependencies [[org.clojure/clojure "1.12.5"]
                  [com.novemberain/langohr "5.6.0" :exclusions [org.slf4j/slf4j-api]]
+                 [ring/ring-jetty-adapter "1.9.6"]
                  [me.raynes/fs "1.4.6"]
                  [org.cyverse/clj-jargon "3.1.6"
                    :exclusions [[org.slf4j/slf4j-log4j12]
                                 [log4j]]]
                  [org.cyverse/clojure-commons "3.0.13" :exclusions [commons-logging]]
                  [org.cyverse/common-cli "2.8.3"]
+                 [org.cyverse/common-swagger-api "3.4.23"]
                  [org.cyverse/heuristomancer "2.8.8"]
                  [org.cyverse/service-logging "2.8.6"]
                  [org.slf4j/slf4j-api "2.0.18"]]
   :eastwood {:exclude-namespaces [:test-paths]
              :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
   :main ^:skip-aot info-typer.core
-  :profiles {:dev     {:resource-paths ["conf/test"]}
+  :profiles {:dev     {:resource-paths ["conf/test"]
+                       :dependencies [[ring/ring-mock "0.4.0"]]}
              :uberjar {:aot :all}}
   :plugins [[jonase/eastwood "1.4.3"]
             [lein-ancient "1.0.0"]

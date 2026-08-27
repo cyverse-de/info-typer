@@ -9,6 +9,7 @@
             [service-logging.thread-context :as tc]
             [clojure-commons.error-codes :as ce]
             [langohr.basic :as lb]
+            [langohr.core :as rmq]
             [info-typer.amqp :as amqp]
             [info-typer.config :as cfg]
             [info-typer.irods :as irods])
@@ -105,10 +106,25 @@
 
 
 (defn receive
-  "Configures the AMQP connection. This is wrapped in a function because we want to start
-   the connection in a new thread."
+  "Configures the AMQP connection and blocks while the consumer runs.
+
+   Blocks while waiting for the connection so that the caller can determine whether or not the
+   consumer has died."
   [^IPersistentMap irods-cfg]
   (try
-    (amqp/configure (partial message-handler irods-cfg) (typer-config-map) (keys routing-functions))
+    (let [{:keys [connection channel]} (amqp/configure (partial message-handler irods-cfg)
+                                                       (typer-config-map)
+                                                       (keys routing-functions))]
+      (try
+        ;; langohr delivers on its own threads, so there is nothing to do here but wait.
+        (while (rmq/open? channel)
+          (Thread/sleep 1000))
+        (log/warn "the AMQP channel closed; the consumer is no longer receiving events")
+        (finally
+          ;; Closed with the channel: the supervisor reconnects from scratch, and a stranded
+          ;; connection would leave a second consumer on the same queue.
+          (amqp/close-connection connection))))
     (catch Exception e
-      (log/error "[amqp/messaging-initialization]" (ce/format-exception e)))))
+      (log/error "[amqp/messaging-initialization]" (ce/format-exception e)))
+    (finally
+      (cfg/set-amqp-connected! false))))
